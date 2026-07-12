@@ -1,0 +1,1 @@
+"""Core drive rescue functionality."""

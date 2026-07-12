@@ -1,0 +1,25 @@
+.DS_Store
+.codex/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+.build/
+*.egg-info/
+
+# Local recovery outputs and private reports
+recovered/
+recovery-output/
+drive-rescue-reports/
+reports/*.json
+reports/*.txt
+reports/*.csv
+*.drive-rescue-session
+
+# Logs may contain personal paths or filenames
+*.log

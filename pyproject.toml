@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drive-rescue-assistant"
+version = "0.1.0"
+description = "Cross-platform external drive scan and safe extraction assistant."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Drive Rescue Assistant Contributors" }]
+license = { text = "MIT" }
+keywords = ["drive", "recovery", "backup", "external-drive", "time-machine"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Archiving :: Backup",
+  "Topic :: Utilities",
+]
+
+[project.scripts]
+drive-rescue = "drive_rescue.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
