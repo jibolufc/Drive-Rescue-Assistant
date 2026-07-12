@@ -25,6 +25,23 @@ It is designed to be careful:
 
 This early build may require Python 3 to be available on the Mac. If the app opens but says Python could not be found, install Python 3 from https://www.python.org/downloads/macos/ or ask the developer for the next packaged build.
 
+## How To Open On Windows
+
+1. Download `DriveRescueAssistant-windows-x64.zip` from the latest GitHub Release.
+2. Extract the zip, then open `DriveRescueAssistant.exe`.
+3. If Microsoft Defender SmartScreen appears, choose `More info`, verify the app name, then choose `Run anyway` for this known friend-test build.
+
+The Windows package is self-contained and does not require Python.
+
+## How To Open On Linux
+
+1. Download `DriveRescueAssistant-linux-x64.tar.gz` from the latest GitHub Release.
+2. Extract the archive.
+3. Mark `DriveRescueAssistant` as executable in the file manager, or run `chmod +x DriveRescueAssistant`.
+4. Open it from the file manager or terminal.
+
+The Linux package is self-contained. It targets mainstream x86-64 distributions compatible with Ubuntu 22.04.
+
 ## What To Test
 
 ### External Drive Rescue
@@ -58,6 +75,7 @@ Please send:
 - Whether your drive appeared.
 - Whether Preview worked.
 - Whether Extract or Copy worked.
+- On Windows/Linux, whether individual file selection worked.
 - Any exact error message shown in the Activity area.
 - A screenshot if something looked confusing.
 

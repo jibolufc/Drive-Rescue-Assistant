@@ -25,6 +25,7 @@ classifiers = [
 
 [project.scripts]
 drive-rescue = "drive_rescue.cli:main"
+drive-rescue-gui = "drive_rescue.gui:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

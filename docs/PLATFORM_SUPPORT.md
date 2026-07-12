@@ -29,6 +29,12 @@ Special handling planned:
 - Drive letter workflows.
 - Robocopy-based copy engine if needed.
 
+Desktop test package:
+
+- Standalone `DriveRescueAssistant.exe` built on GitHub Actions.
+- Does not require the tester to install Python.
+- Includes drive scanning, folder selection, individual-file preview selection, filters, and ZIP extraction.
+
 ## Linux
 
 Adapter: `src/drive_rescue/platforms/linux.py`
@@ -42,6 +48,13 @@ Special handling planned:
 - `findmnt` details.
 - `blkid` filesystem details.
 - Better permission and read-only diagnosis.
+
+Desktop test package:
+
+- Standalone `DriveRescueAssistant` binary built on Ubuntu 22.04.
+- Does not require the tester to install Python.
+- Uses the desktop file picker and the same preview-first extraction flow as Windows.
+- Targets mainstream x86-64 distributions with glibc compatible with Ubuntu 22.04.
 
 ## Capability Model
 

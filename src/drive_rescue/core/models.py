@@ -29,6 +29,7 @@ class ExtractionOptions:
     overwrite: bool = False
     scope: str = "all"
     compress: bool = False
+    selected_paths: frozenset[Path] | None = None
 
 
 @dataclass

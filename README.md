@@ -72,6 +72,13 @@ To create a Mac package that can be uploaded to a GitHub Release:
 
 The package is written to `dist/friend-test/DriveRescueAssistant-mac-friend-test.zip`. Include `docs/FRIEND_TEST_GUIDE.md` and `docs/GITHUB_RELEASE_TESTING.md` when preparing a test release.
 
+Windows and Linux friend-test packages are built automatically by `.github/workflows/desktop-release.yml`. Push a version tag such as `v0.2.0` to create a GitHub Release containing:
+
+- `DriveRescueAssistant-windows-x64.zip`
+- `DriveRescueAssistant-linux-x64.tar.gz`
+
+Both desktop packages are self-contained and do not require Python. Their shared GUI supports detected-drive selection, source/destination folder pickers, file-type filters, individual preview selection, and optional ZIP extraction.
+
 ## Safety Promise
 
 Drive Rescue Assistant is extraction-first. It does not erase, format, repartition, force-mount, or delete files in V1. If a drive looks damaged or read-only, the tool recommends copying readable data out before any repair attempt.

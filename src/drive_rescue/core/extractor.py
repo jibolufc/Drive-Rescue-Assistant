@@ -94,6 +94,9 @@ def _extract_walk(
                 if not _matches_scope(src_file, options.scope):
                     report.files_filtered += 1
                     continue
+                if options.selected_paths is not None and rel_path not in options.selected_paths:
+                    report.files_filtered += 1
+                    continue
 
                 report.files_matched += 1
                 size = src_file.stat().st_size
@@ -134,6 +137,34 @@ def _matches_scope(path: Path, scope: str) -> bool:
     if scope == "all":
         return True
     return path.suffix.lower() in SCOPE_EXTENSIONS[scope]
+
+
+def preview_paths(source: Path, scope: str = "all", include_hidden: bool = True) -> list[tuple[Path, int]]:
+    """Return readable matching files as relative paths and byte sizes."""
+    source = source.expanduser().resolve()
+    if not source.exists():
+        raise FileNotFoundError(f"Source does not exist: {source}")
+    if not source.is_dir():
+        raise NotADirectoryError(f"Source must be a directory: {source}")
+    if scope != "all" and scope not in SCOPE_EXTENSIONS:
+        raise ValueError(f"Unknown extraction scope: {scope}")
+
+    matches: list[tuple[Path, int]] = []
+    report = ExtractionReport(source=source, destination=source, dry_run=True, scope=scope)
+    for root, dirs, files in os_walk_safe(source, report):
+        root_path = Path(root)
+        if not include_hidden:
+            dirs[:] = [name for name in dirs if not name.startswith(".")]
+            files = [name for name in files if not name.startswith(".")]
+        for file_name in files:
+            path = root_path / file_name
+            if not _matches_scope(path, scope):
+                continue
+            try:
+                matches.append((path.relative_to(source), path.stat().st_size))
+            except OSError:
+                continue
+    return matches
 
 
 def _archive_path(source: Path, destination: Path) -> Path:
