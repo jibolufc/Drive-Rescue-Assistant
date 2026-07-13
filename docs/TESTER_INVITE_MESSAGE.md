@@ -17,6 +17,8 @@ https://raw.githubusercontent.com/jibolufc/Drive-Rescue-Assistant/master/downloa
 3. If macOS blocks it, Control-click the app, choose `Open`, and confirm.
 4. This early Mac build may require Python 3. If the app reports that Python is missing, please include that in your feedback.
 
+If you previously downloaded a copy that macOS described as damaged, delete that old copy and download the replacement from the same link again.
+
 ## Windows
 
 Download:

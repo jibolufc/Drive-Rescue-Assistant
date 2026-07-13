@@ -12,7 +12,7 @@ STAGING_DIR="$DIST_DIR/$PACKAGE_NAME"
 PACKAGED_APP="$STAGING_DIR/$APP_NAME.app"
 ZIP_PATH="$DIST_DIR/$PACKAGE_NAME.zip"
 
-rm -rf "$STAGING_DIR" "$ZIP_PATH"
+rm -rf "$DERIVED_DATA" "$STAGING_DIR" "$ZIP_PATH"
 mkdir -p "$STAGING_DIR"
 
 xcodebuild \
@@ -35,6 +35,16 @@ mkdir -p "$PACKAGED_APP/Contents/Resources"
   "$PACKAGED_APP/Contents/Resources/src/"
 ditto "$ROOT_DIR/docs/FRIEND_TEST_GUIDE.md" "$STAGING_DIR/FRIEND_TEST_GUIDE.md"
 
+# Sign only after every bundled helper resource is in place. This prevents
+# Gatekeeper from treating the downloaded app as a damaged, modified bundle.
+/usr/bin/codesign \
+  --force \
+  --deep \
+  --sign - \
+  --timestamp=none \
+  "$PACKAGED_APP"
+/usr/bin/codesign --verify --deep --strict --verbose=2 "$PACKAGED_APP"
+
 cat > "$STAGING_DIR/README.txt" <<'EOF'
 Drive Rescue Assistant - Friend Test Build
 
@@ -46,7 +56,12 @@ right-click DriveRescueAssistant.app, choose Open, then confirm.
 This early build is for testing only.
 EOF
 
-cd "$DIST_DIR"
-/usr/bin/zip -qry -X "$ZIP_PATH" "$PACKAGE_NAME"
+/usr/bin/ditto \
+  -c \
+  -k \
+  --sequesterRsrc \
+  --keepParent \
+  "$STAGING_DIR" \
+  "$ZIP_PATH"
 
 echo "$ZIP_PATH"

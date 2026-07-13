@@ -23,6 +23,8 @@ It is designed to be careful:
 3. Open `DriveRescueAssistant.app`.
 4. If macOS blocks it because it is not yet notarized, right-click the app and choose `Open`, then confirm.
 
+If macOS says the app is damaged, delete that copy and download the latest package again. Do not move it to the Bin until you have confirmed you downloaded the latest replacement build.
+
 This early build may require Python 3 to be available on the Mac. If the app opens but says Python could not be found, install Python 3 from https://www.python.org/downloads/macos/ or ask the developer for the next packaged build.
 
 ## How To Open On Windows
