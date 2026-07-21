@@ -265,6 +265,8 @@ If analytics are added later, they should be optional and must not include file 
 
 ## Release Roadmap
 
+The detailed product-version roadmap, including Advanced Recovery and the separate Forensic Edition, is maintained in `docs/PRODUCT_ROADMAP.md`. The phases below describe Store delivery order only.
+
 ### Phase 1: Mac Utility MVP
 
 - Finish SwiftUI app.

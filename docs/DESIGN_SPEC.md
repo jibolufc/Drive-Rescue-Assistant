@@ -70,29 +70,16 @@ drive-rescue extract <source> --to <destination>
 6. Run real extraction if the preview looks right.
 7. Review generated report.
 
-## Future Versions
+## Version Roadmap
 
-V2:
+The original V1/V2/V3 outline has been replaced by a release-based roadmap that separates consumer rescue, advanced deleted-file recovery, and forensic workflows.
 
-- Time Machine backup date browsing.
-- Folder/file-type extraction filters.
-- GUI prototype.
-- Duplicate detection.
-- Optional safe delete preview, still no default deletion.
+- `0.x`: finish usability, reliability, signing, and Store-safe architecture.
+- `1.x`: stable Safe Rescue and mounted-backup browsing.
+- `2.x`: image-first acquisition, deleted-file recovery, and deep carving.
+- `3.x`: separate forensic edition with evidence hashes, audit records, and validated workflows.
 
-Implemented V1.1:
-
-- File-group extraction scopes: all files, documents, photos, videos, audio, and archives.
-- Optional ZIP archive output for matched files.
-- Transfer mode for copying selected folders from the Mac to an external destination using the same preview and extraction engine.
-
-V3:
-
-- APFS snapshot browser.
-- Checksums.
-- Recovery session history.
-- Store-ready macOS app.
-- Windows/Linux packaged releases.
+See `docs/PRODUCT_ROADMAP.md` for scope, platform availability, safety boundaries, and release gates.
 
 For the Apple Mac App Store, Google Play, and broader cross-platform release path, see `docs/STORE_AND_PLATFORM_PLAN.md`.
 
