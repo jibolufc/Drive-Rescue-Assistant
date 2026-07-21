@@ -62,6 +62,13 @@ The Mac app also includes a "Move From This Mac" workflow for copying a user-sel
 
 Use `DriveRescueAssistant.xcodeproj` for signing, Archive, asset catalog work, and future App Store preparation.
 
+For a Developer ID-signed direct-download package and Apple's notarization
+workflow, see `docs/MACOS_SIGNING_NOTARIZATION.md` and run:
+
+```bash
+./script/package_macos_release.sh
+```
+
 ## Friend Testing
 
 To create a Mac package that can be uploaded to a GitHub Release:
