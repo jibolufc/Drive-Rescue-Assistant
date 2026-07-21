@@ -21,8 +21,6 @@ $packageRoot = Join-Path $outputRoot "package"
 $assetsRoot = Join-Path $packageRoot "Assets"
 $msixPath = Join-Path $outputRoot "DriveRescueAssistant_$($Version)_x64.msix"
 $uploadPath = Join-Path $outputRoot "DriveRescueAssistant_$($Version)_x64.msixupload"
-$publisher = "CN=AC772371-FB65-4313-A8AB-41D0B9D11E49"
-
 if ($Version -notmatch '^\d+\.\d+\.\d+\.\d+$') {
     throw "MSIX version must contain four numeric parts, for example 0.3.1.0."
 }
@@ -95,60 +93,20 @@ if (-not $sdkVersion) {
 }
 
 $makeAppx = Join-Path $sdkVersion.FullName "x64/makeappx.exe"
-$signTool = Join-Path $sdkVersion.FullName "x64/signtool.exe"
-
+Write-Output "Packing MSIX with MakeAppx..."
 & $makeAppx pack /d $packageRoot /p $msixPath /o
 if ($LASTEXITCODE -ne 0) {
     throw "MakeAppx failed with exit code $LASTEXITCODE."
 }
 
-# Partner Center re-signs accepted packages. This temporary certificate makes
-# the package structurally testable while retaining the Store publisher value.
-$certificate = $null
-$trustedCertificate = $null
-$pfxPath = Join-Path $outputRoot "StoreUploadTemporary.pfx"
-$cerPath = Join-Path $outputRoot "StoreUploadTemporary.cer"
-
-try {
-    $certificate = New-SelfSignedCertificate `
-        -Type Custom `
-        -Subject $publisher `
-        -KeyUsage DigitalSignature `
-        -KeyExportPolicy Exportable `
-        -FriendlyName "Drive Rescue Assistant Store Upload" `
-        -CertStoreLocation "Cert:\CurrentUser\My" `
-        -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}") `
-        -NotAfter (Get-Date).AddDays(7)
-    $passwordText = [Guid]::NewGuid().ToString("N")
-    $password = ConvertTo-SecureString $passwordText -AsPlainText -Force
-    Export-PfxCertificate -Cert $certificate -FilePath $pfxPath -Password $password | Out-Null
-    Export-Certificate -Cert $certificate -FilePath $cerPath | Out-Null
-    $trustedCertificate = Import-Certificate -FilePath $cerPath -CertStoreLocation "Cert:\CurrentUser\Root"
-
-    & $signTool sign /fd SHA256 /f $pfxPath /p $passwordText $msixPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "SignTool failed with exit code $LASTEXITCODE."
-    }
-    & $signTool verify /pa /v $msixPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "MSIX signature verification failed with exit code $LASTEXITCODE."
-    }
-
-    $uploadStaging = Join-Path $outputRoot "upload"
-    New-Item $uploadStaging -ItemType Directory -Force | Out-Null
-    Copy-Item $msixPath $uploadStaging
-    $temporaryZip = Join-Path $outputRoot "DriveRescueAssistant_$($Version)_x64.zip"
-    Compress-Archive -Path (Join-Path $uploadStaging "*") -DestinationPath $temporaryZip
-    Move-Item $temporaryZip $uploadPath
-}
-finally {
-    Remove-Item $pfxPath, $cerPath -Force -ErrorAction SilentlyContinue
-    if ($trustedCertificate) {
-        Remove-Item "Cert:\CurrentUser\Root\$($trustedCertificate.Thumbprint)" -Force -ErrorAction SilentlyContinue
-    }
-    if ($certificate) {
-        Remove-Item "Cert:\CurrentUser\My\$($certificate.Thumbprint)" -Force -ErrorAction SilentlyContinue
-    }
-}
+# Partner Center signs accepted MSIX packages. Store uploads do not need a
+# developer certificate, so the CI runner never creates or handles a private key.
+$uploadStaging = Join-Path $outputRoot "upload"
+New-Item $uploadStaging -ItemType Directory -Force | Out-Null
+Copy-Item $msixPath $uploadStaging
+$temporaryZip = Join-Path $outputRoot "DriveRescueAssistant_$($Version)_x64.zip"
+Write-Output "Creating Microsoft Store upload archive..."
+Compress-Archive -Path (Join-Path $uploadStaging "*") -DestinationPath $temporaryZip
+Move-Item $temporaryZip $uploadPath
 
 Write-Output $uploadPath

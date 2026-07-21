@@ -14,7 +14,7 @@ These values are public package identity metadata, not account credentials.
 
 The Windows GitHub Actions build creates a separate artifact named `MicrosoftStorePackage`. It contains an `.msixupload` file for the Partner Center Packages page.
 
-The Store package is intentionally separate from the public Windows ZIP. Microsoft signs accepted Store packages for customer distribution.
+The Store package is intentionally separate from the public Windows ZIP. It is unsigned at upload time; Microsoft signs accepted MSIX packages for customer distribution, so no developer certificate or private key is required for this path.
 
 ## Partner Center Steps
 
