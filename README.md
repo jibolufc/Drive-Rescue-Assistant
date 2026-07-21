@@ -79,6 +79,8 @@ Windows and Linux friend-test packages are built automatically by `.github/workf
 
 Both desktop packages are self-contained and do not require Python. Their shared GUI supports detected-drive selection, source/destination folder pickers, file-type filters, individual preview selection, and optional ZIP extraction.
 
+The same workflow also produces a private GitHub Actions artifact named `MicrosoftStorePackage`. Its `.msixupload` file uses the reserved Partner Center identity and is intended for Store submission, not public direct installation. See `docs/WINDOWS_STORE_SUBMISSION.md`.
+
 ## Safety Promise
 
 Drive Rescue Assistant is extraction-first. It does not erase, format, repartition, force-mount, or delete files in V1. If a drive looks damaged or read-only, the tool recommends copying readable data out before any repair attempt.

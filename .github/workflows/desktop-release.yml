@@ -62,6 +62,21 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path dist/DriveRescueAssistant.exe -DestinationPath DriveRescueAssistant-windows-x64.zip
 
+      - name: Build Microsoft Store upload package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          ./script/package_windows_store.ps1
+          -ExecutablePath dist/DriveRescueAssistant.exe
+          -Version "0.3.${{ github.run_number }}.0"
+
+      - name: Upload Microsoft Store package
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MicrosoftStorePackage
+          path: dist-store/*.msixupload
+
       - name: Package Linux build
         if: runner.os == 'Linux'
         run: tar -C dist -czf DriveRescueAssistant-linux-x64.tar.gz DriveRescueAssistant
@@ -79,6 +94,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: release-files
+          pattern: DriveRescueAssistant-*
           merge-multiple: true
       - name: Publish GitHub Release
         env:
