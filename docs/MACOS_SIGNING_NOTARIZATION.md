@@ -34,23 +34,46 @@ The release script builds a universal app for Apple-silicon and Intel Macs.
 
 ## Configure Notarization
 
-Create an app-specific password at Apple Account, then store the credentials in
-the login Keychain once:
+Use an App Store Connect Team API key so notarization is independent of Apple
+Account password changes. Individual API keys do not support `notarytool`.
+
+1. In App Store Connect, open Users and Access, then Integrations.
+2. Generate a Team API key with the Developer role.
+3. Download its `.p8` private key. Apple permits only one download.
+4. Store it outside the repository with owner-only permissions.
+
+```bash
+mkdir -p "$HOME/.private_keys"
+chmod 700 "$HOME/.private_keys"
+mv "$HOME/Downloads/AuthKey_YOUR_KEY_ID.p8" "$HOME/.private_keys/"
+chmod 600 "$HOME/.private_keys/AuthKey_YOUR_KEY_ID.p8"
+```
+
+Save and validate the API credentials in the macOS Keychain:
 
 ```bash
 xcrun notarytool store-credentials "DriveRescueNotary" \
-  --apple-id "YOUR_APPLE_ID" \
-  --team-id "C8QY39ZJ4G" \
-  --password "YOUR_APP_SPECIFIC_PASSWORD"
+  --key "$HOME/.private_keys/AuthKey_YOUR_KEY_ID.p8" \
+  --key-id "YOUR_KEY_ID" \
+  --issuer "YOUR_ISSUER_ID" \
+  --validate
 ```
 
-Enter sensitive values only into Terminal when prompted or into the command on
-your own Mac. Do not put real credentials into this file or GitHub Actions.
+Never commit a `.p8` file, API key contents, Apple password, or exported signing
+identity. The Key ID and Issuer ID are identifiers, not private key material.
 
 Build, submit, wait for Apple, staple the ticket, and recreate the ZIP:
 
 ```bash
 NOTARY_PROFILE="DriveRescueNotary" ./script/package_macos_release.sh
+```
+
+If Apple keeps a submission in progress after the local wait is stopped, query
+the existing submission instead of uploading duplicates:
+
+```bash
+xcrun notarytool info "SUBMISSION_ID" \
+  --keychain-profile "DriveRescueNotary"
 ```
 
 ## Verification
