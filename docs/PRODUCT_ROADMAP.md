@@ -37,11 +37,12 @@ Implemented:
 - Partial recovery when individual files are unreadable.
 - Clear completion summaries and exportable local JSON reports.
 - Self-contained universal Mac extraction engine.
+- Developer ID-signed direct Mac package accepted by Apple notarization with
+  its ticket stapled.
 
 Not yet public-release ready:
 
 - Store-safe macOS build configuration.
-- Accepted and stapled notarization for the current Mac release candidate.
 - Production Windows direct-download signing.
 - Store screenshots, listing copy, support site, and final privacy URLs.
 - Clean-machine confirmation on macOS, Windows, and Linux.
