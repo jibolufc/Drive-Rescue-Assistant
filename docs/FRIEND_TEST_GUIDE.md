@@ -25,7 +25,8 @@ It is designed to be careful:
 
 If macOS says the app is damaged, delete that copy and download the latest package again. Do not move it to the Bin until you have confirmed you downloaded the latest replacement build.
 
-This early build may require Python 3 to be available on the Mac. If the app opens but says Python could not be found, install Python 3 from https://www.python.org/downloads/macos/ or ask the developer for the next packaged build.
+The v0.4 Mac package includes its extraction engine and does not require Python
+to be installed separately.
 
 ## How To Open On Windows
 
@@ -57,6 +58,10 @@ The Linux package is self-contained. It targets mainstream x86-64 distributions 
 7. Optionally tick `Compress to ZIP`.
 8. Click `Preview`.
 9. If the preview looks right, click `Extract Files`.
+10. During a longer copy, confirm that the current file, progress, elapsed time,
+    and estimated remaining time update.
+11. Try Cancel on test data only and confirm the app reports cancellation
+    without leaving an incomplete ZIP.
 
 ### Move From This Mac
 
@@ -68,6 +73,10 @@ The Linux package is self-contained. It targets mainstream x86-64 distributions 
 6. Click `Preview`.
 7. If the preview looks right, click `Copy Files`.
 
+After a preview, compare the planned size with the free space on the
+destination. After copying, open the local report and confirm its totals match
+what you selected.
+
 ## What Feedback To Send
 
 Please send:
@@ -77,6 +86,7 @@ Please send:
 - Whether your drive appeared.
 - Whether Preview worked.
 - Whether Extract or Copy worked.
+- Whether progress, Cancel, and the completion report behaved clearly.
 - On Windows/Linux, whether individual file selection worked.
 - Any exact error message shown in the Activity area.
 - A screenshot if something looked confusing.

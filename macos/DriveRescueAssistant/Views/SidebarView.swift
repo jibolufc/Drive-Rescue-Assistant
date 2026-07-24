@@ -14,11 +14,21 @@ struct SidebarView: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.inline)
+                .onChange(of: store.workflow) { _, workflow in
+                    switch workflow {
+                    case .driveRescue:
+                        store.activityLog = store.drives.isEmpty
+                            ? "No external drives detected. Connect a drive, then refresh."
+                            : "Select a connected drive to begin."
+                    case .macTransfer:
+                        store.activityLog = "Choose a source folder and destination to begin."
+                    }
+                }
             }
 
             Section("Connected Drives") {
                 if store.drives.isEmpty {
-                    Text("No drives found")
+                    Text("No external drives detected")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(store.drives) { drive in
@@ -29,6 +39,9 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .onChange(of: store.selectedDriveID) { _, _ in
+            store.clearPreview()
+        }
     }
 }
 

@@ -9,6 +9,11 @@ Drive Rescue Assistant is designed around data preservation.
 - Never modify Time Machine backups in V1.
 - Never claim full recovery is guaranteed.
 - Always keep generated reports local.
+- Plan and check destination capacity before creating extraction output.
+- Write ZIP output under a partial name and expose it only after completion.
+- Remove temporary partial files after cancellation or copy failure.
+- Continue around individual unreadable files while recording them in the
+  local report.
 - Treat filenames and paths as private user data.
 
 ## Deletion Policy

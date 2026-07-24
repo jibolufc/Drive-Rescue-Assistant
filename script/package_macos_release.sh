@@ -11,9 +11,12 @@ BUILT_APP="$DERIVED_DATA/Build/Products/Release/$APP_NAME.app"
 DIST_DIR="$ROOT_DIR/dist/macos"
 STAGED_APP="$DIST_DIR/$APP_NAME.app"
 ZIP_PATH="$DIST_DIR/$APP_NAME-macOS.zip"
+ENGINE_PATH="$ROOT_DIR/build/macos-engine/dist/DriveRescueEngine"
 
 rm -rf "$DERIVED_DATA" "$DIST_DIR"
 mkdir -p "$DIST_DIR"
+
+"$ROOT_DIR/script/build_macos_engine.sh"
 
 xcodebuild \
   -quiet \
@@ -29,16 +32,18 @@ xcodebuild \
 
 ditto "$BUILT_APP" "$STAGED_APP"
 mkdir -p "$STAGED_APP/Contents/Resources"
-/usr/bin/rsync -a \
-  --exclude "__pycache__" \
-  --exclude "*.pyc" \
-  --exclude "*.egg-info" \
-  "$ROOT_DIR/src/" \
-  "$STAGED_APP/Contents/Resources/src/"
+ditto "$ENGINE_PATH" "$STAGED_APP/Contents/Resources/DriveRescueEngine"
 
 # Finder and downloaded-source metadata can invalidate a signature after the
 # bundle is archived. Remove it before applying the final Developer ID seal.
 /usr/bin/xattr -cr "$STAGED_APP"
+
+/usr/bin/codesign \
+  --force \
+  --sign "$SIGNING_IDENTITY" \
+  --options runtime \
+  --timestamp \
+  "$STAGED_APP/Contents/Resources/DriveRescueEngine"
 
 /usr/bin/codesign \
   --force \

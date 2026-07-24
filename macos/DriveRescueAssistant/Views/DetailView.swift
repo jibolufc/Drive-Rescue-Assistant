@@ -31,6 +31,8 @@ private struct MacTransferContent: View {
                 sourceAndDestination
                 options
                 actions
+                PreviewSelectionView(store: store)
+                ExtractionStatusView(store: store)
                 activity
             }
             .padding(32)
@@ -123,11 +125,18 @@ private struct MacTransferContent: View {
                 }
             }
             .pickerStyle(.segmented)
+            .disabled(store.isExtractionActive)
+            .accessibilityLabel("File types to copy")
+            .onChange(of: store.extractionScope) { _, _ in
+                store.clearPreview()
+            }
 
             Toggle(isOn: $store.compressOutput) {
                 Label("Compress to ZIP", systemImage: "archivebox")
             }
             .toggleStyle(.checkbox)
+            .disabled(store.isExtractionActive)
+            .accessibilityHint("Creates one ZIP archive at the destination")
         }
     }
 
@@ -138,7 +147,8 @@ private struct MacTransferContent: View {
             } label: {
                 Label("Preview", systemImage: "doc.text.magnifyingglass")
             }
-            .disabled(!canTransfer)
+            .disabled(!canTransfer || store.isExtractionActive)
+            .keyboardShortcut("p", modifiers: [.command, .shift])
 
             if canTransfer {
                 Button {
@@ -147,6 +157,9 @@ private struct MacTransferContent: View {
                     Label("Copy Files", systemImage: "square.and.arrow.down")
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(store.isExtractionActive || !store.hasPreviewSelection)
+                .help(store.hasPreviewSelection ? "Copy the selected preview items" : "Preview and select files first")
+                .keyboardShortcut(.return, modifiers: [.command])
             } else {
                 Button {
                     store.activityLog = "Choose a source folder and destination first."
@@ -155,6 +168,16 @@ private struct MacTransferContent: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(true)
+            }
+
+            if store.isExtractionActive {
+                Button {
+                    store.cancelExtraction()
+                } label: {
+                    Label("Cancel", systemImage: "xmark.circle")
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
             }
         }
     }
@@ -197,6 +220,9 @@ private struct EmptyDriveView: View {
                 .font(.title3)
                 .fontWeight(.medium)
                 .foregroundStyle(.primary)
+            Text("You can still use Move From This Mac without an external drive.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(32)
     }

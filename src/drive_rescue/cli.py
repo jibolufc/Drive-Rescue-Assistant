@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import signal
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from .core.extractor import extract_files
-from .core.models import DriveInfo, ExtractionOptions
+from .core.extractor import ExtractionCancelled, InsufficientSpaceError, extract_files
+from .core.models import DriveInfo, ExtractionOptions, ExtractionProgress, ExtractionReport
 from .core.reporter import write_report
 from .core.safety import diagnose_drive
 from .platforms.current import platform_adapter
@@ -51,7 +53,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Choose which file group to extract.",
     )
     extract.add_argument("--compress", action="store_true", help="Write matched files into a ZIP archive.")
-    extract.add_argument("--report-dir", default="drive-rescue-reports", help="Where JSON reports are written.")
+    extract.add_argument("--report-dir", help="Where JSON reports are written. Defaults to a folder in the destination.")
+    extract.add_argument("--events-json", action="store_true", help=argparse.SUPPRESS)
+    extract.add_argument("--selection-file", help=argparse.SUPPRESS)
 
     return parser
 
@@ -99,18 +103,72 @@ def command_inspect(args: argparse.Namespace) -> int:
 
 
 def command_extract(args: argparse.Namespace) -> int:
-    options = ExtractionOptions(
-        source=Path(args.source),
-        destination=Path(args.to),
-        dry_run=args.dry_run,
-        include_hidden=not args.no_hidden,
-        overwrite=args.overwrite,
-        scope=args.scope,
-        compress=args.compress,
-    )
-    report = extract_files(options)
-    report_path = write_report(report, Path(args.report_dir))
+    cancel_requested = False
 
+    def request_cancel(_signum: int, _frame: object) -> None:
+        nonlocal cancel_requested
+        cancel_requested = True
+
+    previous_sigterm = signal.signal(signal.SIGTERM, request_cancel)
+    progress_callback = _json_progress_callback if args.events_json else None
+    report_dir = Path(args.report_dir) if args.report_dir else Path(args.to) / "Drive Rescue Reports"
+
+    try:
+        selected_paths = None
+        if args.selection_file:
+            selection_payload = json.loads(Path(args.selection_file).read_text(encoding="utf-8"))
+            if not isinstance(selection_payload, list) or not all(isinstance(item, str) for item in selection_payload):
+                raise ValueError("Selection file must contain a JSON list of relative paths.")
+            selected_paths = frozenset(Path(item) for item in selection_payload)
+
+        options = ExtractionOptions(
+            source=Path(args.source),
+            destination=Path(args.to),
+            dry_run=args.dry_run,
+            include_hidden=not args.no_hidden,
+            overwrite=args.overwrite,
+            scope=args.scope,
+            compress=args.compress,
+            progress_callback=progress_callback,
+            cancel_check=lambda: cancel_requested,
+            selected_paths=selected_paths,
+        )
+        report = extract_files(options)
+    except ExtractionCancelled as exc:
+        report = exc.report
+        report_path = write_report(report, report_dir)
+        _print_report(report, report_path)
+        _emit_json_summary(report, report_path, args.events_json)
+        return 130
+    except InsufficientSpaceError as exc:
+        if args.events_json:
+            _emit_json_event(
+                {
+                    "event": "error",
+                    "code": "insufficient_space",
+                    "message": str(exc),
+                    "required_bytes": exc.required_bytes,
+                    "available_bytes": exc.available_bytes,
+                }
+            )
+        print(str(exc), file=sys.stderr)
+        return 3
+    except (OSError, ValueError) as exc:
+        code = "permission_denied" if isinstance(exc, PermissionError) else "source_unavailable"
+        if args.events_json:
+            _emit_json_event({"event": "error", "code": code, "message": str(exc)})
+        print(str(exc), file=sys.stderr)
+        return 4
+    finally:
+        signal.signal(signal.SIGTERM, previous_sigterm)
+
+    report_path = write_report(report, report_dir)
+    _print_report(report, report_path)
+    _emit_json_summary(report, report_path, args.events_json)
+    return 0 if report.files_failed == 0 else 2
+
+
+def _print_report(report: ExtractionReport, report_path: Path) -> None:
     verb = "planned" if report.dry_run else "copied"
     print(f"Files seen: {report.files_seen}")
     print(f"Scope: {report.scope}")
@@ -126,7 +184,46 @@ def command_extract(args: argparse.Namespace) -> int:
     if report.archive_path:
         print(f"Archive: {report.archive_path}")
     print(f"Report: {report_path}")
-    return 0 if report.files_failed == 0 else 2
+
+
+def _json_progress_callback(progress: ExtractionProgress) -> None:
+    _emit_json_event(
+        {
+            "event": "progress",
+            "phase": progress.phase,
+            "current_path": str(progress.current_path) if progress.current_path else None,
+            "files_completed": progress.files_completed,
+            "files_total": progress.files_total,
+            "bytes_completed": progress.bytes_completed,
+            "bytes_total": progress.bytes_total,
+            "current_size": progress.current_size,
+        }
+    )
+
+
+def _emit_json_summary(report: ExtractionReport, report_path: Path, enabled: bool) -> None:
+    if not enabled:
+        return
+    _emit_json_event(
+        {
+            "event": "summary",
+            "status": report.status,
+            "files_seen": report.files_seen,
+            "files_matched": report.files_matched,
+            "files_filtered": report.files_filtered,
+            "files_copied": report.files_copied,
+            "files_skipped": report.files_skipped,
+            "files_failed": report.files_failed,
+            "bytes_planned": report.bytes_planned,
+            "bytes_copied": report.bytes_copied,
+            "archive_path": str(report.archive_path) if report.archive_path else None,
+            "report_path": str(report_path),
+        }
+    )
+
+
+def _emit_json_event(payload: dict) -> None:
+    print(f"DRA_EVENT {json.dumps(payload, separators=(',', ':'))}", flush=True)
 
 
 def _drive_to_json(drive: DriveInfo) -> dict:

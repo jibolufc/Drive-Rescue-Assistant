@@ -21,6 +21,7 @@
 		7A100001000000000000000B /* DetailRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A100001000000000000010B /* DetailRow.swift */; };
 		7A100001000000000000000C /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A100001000000000000010C /* Formatters.swift */; };
 		7A100001000000000000000D /* ProjectPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A100001000000000000010D /* ProjectPaths.swift */; };
+		7A1000010000000000000014 /* ExtractionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000010000000000000114 /* ExtractionStatusView.swift */; };
 		7A100001000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A100001000000000000010E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +40,7 @@
 		7A100001000000000000010B /* DetailRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailRow.swift; sourceTree = "<group>"; };
 		7A100001000000000000010C /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
 		7A100001000000000000010D /* ProjectPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectPaths.swift; sourceTree = "<group>"; };
+		7A1000010000000000000114 /* ExtractionStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractionStatusView.swift; sourceTree = "<group>"; };
 		7A100001000000000000010E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7A100001000000000000010F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7A1000010000000000000110 /* Development.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Development.entitlements; sourceTree = "<group>"; };
@@ -128,6 +130,7 @@
 				7A1000010000000000000107 /* SidebarView.swift */,
 				7A1000010000000000000108 /* DetailView.swift */,
 				7A1000010000000000000109 /* DriveDetailContent.swift */,
+				7A1000010000000000000114 /* ExtractionStatusView.swift */,
 				7A100001000000000000010A /* StatusBadge.swift */,
 				7A100001000000000000010B /* DetailRow.swift */,
 			);
@@ -233,6 +236,7 @@
 				7A1000010000000000000007 /* SidebarView.swift in Sources */,
 				7A1000010000000000000008 /* DetailView.swift in Sources */,
 				7A1000010000000000000009 /* DriveDetailContent.swift in Sources */,
+				7A1000010000000000000014 /* ExtractionStatusView.swift in Sources */,
 				7A100001000000000000000A /* StatusBadge.swift in Sources */,
 				7A100001000000000000000B /* DetailRow.swift in Sources */,
 				7A100001000000000000000C /* Formatters.swift in Sources */,
@@ -359,7 +363,7 @@
 				CODE_SIGN_ENTITLEMENTS = macos/DriveRescueAssistant/Resources/Development.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = C8QY39ZJ4G;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -369,7 +373,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.smilee.DriveRescueAssistant;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = macosx;
@@ -386,7 +390,7 @@
 				CODE_SIGN_ENTITLEMENTS = macos/DriveRescueAssistant/Resources/Development.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = C8QY39ZJ4G;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -396,7 +400,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.smilee.DriveRescueAssistant;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = macosx;

@@ -11,9 +11,12 @@ DIST_DIR="$ROOT_DIR/dist/friend-test"
 STAGING_DIR="$DIST_DIR/$PACKAGE_NAME"
 PACKAGED_APP="$STAGING_DIR/$APP_NAME.app"
 ZIP_PATH="$DIST_DIR/$PACKAGE_NAME.zip"
+ENGINE_PATH="$ROOT_DIR/build/macos-engine/dist/DriveRescueEngine"
 
 rm -rf "$DERIVED_DATA" "$STAGING_DIR" "$ZIP_PATH"
 mkdir -p "$STAGING_DIR"
+
+"$ROOT_DIR/script/build_macos_engine.sh"
 
 xcodebuild \
   -quiet \
@@ -27,12 +30,7 @@ xcodebuild \
 
 ditto "$BUILT_APP" "$PACKAGED_APP"
 mkdir -p "$PACKAGED_APP/Contents/Resources"
-/usr/bin/rsync -a \
-  --exclude "__pycache__" \
-  --exclude "*.pyc" \
-  --exclude "*.egg-info" \
-  "$ROOT_DIR/src/" \
-  "$PACKAGED_APP/Contents/Resources/src/"
+ditto "$ENGINE_PATH" "$PACKAGED_APP/Contents/Resources/DriveRescueEngine"
 ditto "$ROOT_DIR/docs/FRIEND_TEST_GUIDE.md" "$STAGING_DIR/FRIEND_TEST_GUIDE.md"
 
 # Sign only after every bundled helper resource is in place. This prevents

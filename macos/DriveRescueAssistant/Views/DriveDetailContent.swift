@@ -12,6 +12,8 @@ struct DriveDetailContent: View {
                 metadata
                 repairOptions
                 extraction
+                PreviewSelectionView(store: store)
+                ExtractionStatusView(store: store)
                 activity
             }
             .padding(32)
@@ -71,13 +73,18 @@ struct DriveDetailContent: View {
                 }
             }
             .pickerStyle(.segmented)
-            .disabled(!canChooseDestination)
+            .disabled(!canChooseDestination || store.isExtractionActive)
+            .accessibilityLabel("File types to extract")
+            .onChange(of: store.extractionScope) { _, _ in
+                store.clearPreview()
+            }
 
             Toggle(isOn: $store.compressOutput) {
                 Label("Compress to ZIP", systemImage: "archivebox")
             }
             .toggleStyle(.checkbox)
-            .disabled(!canChooseDestination)
+            .disabled(!canChooseDestination || store.isExtractionActive)
+            .accessibilityHint("Creates one ZIP archive at the destination")
 
             HStack(spacing: 10) {
                 Text(destinationText)
@@ -92,7 +99,7 @@ struct DriveDetailContent: View {
                 } label: {
                     Label("Choose", systemImage: "folder")
                 }
-                .disabled(!canChooseDestination)
+                .disabled(!canChooseDestination || store.isExtractionActive)
             }
 
             HStack(spacing: 12) {
@@ -101,7 +108,8 @@ struct DriveDetailContent: View {
                 } label: {
                     Label("Preview", systemImage: "doc.text.magnifyingglass")
                 }
-                .disabled(!canExtract)
+                .disabled(!canExtract || store.isExtractionActive)
+                .keyboardShortcut("p", modifiers: [.command, .shift])
 
                 if canExtract {
                     Button {
@@ -110,6 +118,9 @@ struct DriveDetailContent: View {
                         Label("Extract Files", systemImage: "square.and.arrow.down")
                     }
                     .buttonStyle(.borderedProminent)
+                    .disabled(store.isExtractionActive || !store.hasPreviewSelection)
+                    .help(store.hasPreviewSelection ? "Extract the selected preview items" : "Preview and select files first")
+                    .keyboardShortcut(.return, modifiers: [.command])
                 } else {
                     Button {
                         store.activityLog = extractionBlockedMessage
@@ -118,6 +129,16 @@ struct DriveDetailContent: View {
                     }
                     .buttonStyle(.bordered)
                     .disabled(true)
+                }
+
+                if store.isExtractionActive {
+                    Button {
+                        store.cancelExtraction()
+                    } label: {
+                        Label("Cancel", systemImage: "xmark.circle")
+                    }
+                    .buttonStyle(.bordered)
+                    .keyboardShortcut(.cancelAction)
                 }
             }
         }
@@ -180,22 +201,26 @@ struct DriveDetailContent: View {
 
     private var notes: [String] {
         if !drive.warnings.isEmpty {
-            return drive.warnings
+            return drive.warnings + physicalDriveWarning
         }
         switch status {
         case .canExtract:
-            return ["Safe to preview extraction."]
+            return ["Safe to preview extraction."] + physicalDriveWarning
         case .readOnly:
-            return ["Read-only drive. Extraction may work, but changes are blocked."]
+            return ["Read-only drive. Extraction may work, but changes are blocked."] + physicalDriveWarning
         case .notMounted:
-            return ["Drive is visible but not mounted. Extraction is unavailable until it is mounted."]
+            return ["Drive is visible but not mounted. Extraction is unavailable until it is mounted."] + physicalDriveWarning
         case .timeMachine:
-            return ["Time Machine backup detected. Copy files out; do not modify the backup."]
+            return ["Time Machine backup detected. Copy files out; do not modify the backup."] + physicalDriveWarning
         case .locked:
-            return ["Drive appears locked. Unlock it in macOS before extraction."]
+            return ["Drive appears locked. Unlock it in macOS before extraction."] + physicalDriveWarning
         case .unknown:
-            return ["No obvious safety warnings detected."]
+            return ["No obvious safety warnings detected."] + physicalDriveWarning
         }
+    }
+
+    private var physicalDriveWarning: [String] {
+        ["If the drive clicks, grinds, or repeatedly spins down, stop and disconnect it. Software recovery can worsen physical damage."]
     }
 
     private var primaryRecommendation: String {

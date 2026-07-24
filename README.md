@@ -2,7 +2,7 @@
 
 Drive Rescue Assistant is a local-first, cross-platform external drive rescue tool. It helps inspect removable drives, explain likely read/write problems, and extract readable files into a normal folder without modifying the source drive.
 
-The first version is intentionally conservative:
+The current v0.4 beta is intentionally conservative:
 
 - Scan mounted drives.
 - Inspect one drive or mount path.
@@ -10,6 +10,10 @@ The first version is intentionally conservative:
 - Copy readable files out to another destination.
 - Support dry-run extraction previews.
 - Produce local reports.
+- Show current-file progress, elapsed time, and estimated remaining time.
+- Check destination space before copying.
+- Cancel safely without presenting an incomplete ZIP as finished.
+- Continue past individual unreadable files and report them clearly.
 - Avoid delete, format, repair, repartition, force-mount, or permission-bypass operations.
 
 ## Supported Platforms
@@ -62,6 +66,9 @@ The Mac app also includes a "Move From This Mac" workflow for copying a user-sel
 
 Use `DriveRescueAssistant.xcodeproj` for signing, Archive, asset catalog work, and future App Store preparation.
 
+Packaged v0.4 Mac builds include a universal self-contained extraction engine,
+so testers do not need to install Python separately.
+
 For a Developer ID-signed direct-download package and Apple's notarization
 workflow, see `docs/MACOS_SIGNING_NOTARIZATION.md` and run:
 
@@ -79,7 +86,7 @@ To create a Mac package that can be uploaded to a GitHub Release:
 
 The package is written to `dist/friend-test/DriveRescueAssistant-mac-friend-test.zip`. Include `docs/FRIEND_TEST_GUIDE.md` and `docs/GITHUB_RELEASE_TESTING.md` when preparing a test release.
 
-Windows and Linux friend-test packages are built automatically by `.github/workflows/desktop-release.yml`. Push a version tag such as `v0.2.0` to create a GitHub Release containing:
+Windows and Linux friend-test packages are built automatically by `.github/workflows/desktop-release.yml`. Push a version tag such as `v0.4.0` to create a GitHub Release containing:
 
 - `DriveRescueAssistant-windows-x64.zip`
 - `DriveRescueAssistant-linux-x64.tar.gz`

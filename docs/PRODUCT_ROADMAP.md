@@ -1,6 +1,6 @@
 # Drive Rescue Assistant Product Roadmap
 
-Last reviewed: 21 July 2026
+Last reviewed: 24 July 2026
 
 ## Product Lines
 
@@ -14,9 +14,9 @@ Drive Rescue Assistant should grow through three clear capability levels instead
 
 The simple workflow remains the default even after advanced editions exist.
 
-## Current Position: v0.3.1
+## Current Position: v0.4.0 Release Candidate
 
-Status: friend-testing alpha.
+Status: usability beta implementation complete; release validation in progress.
 
 Implemented:
 
@@ -30,19 +30,28 @@ Implemented:
 - Read-only source policy for normal extraction.
 - Microsoft Store MSIX build pipeline.
 - GitHub friend-test releases.
+- Approved drive-and-open-chain identity and platform icon assets.
+- Determinate extraction progress, current file, elapsed time, and ETA.
+- Destination-capacity preflight and low-space blocking.
+- Safe cancellation with incomplete ZIP cleanup.
+- Partial recovery when individual files are unreadable.
+- Clear completion summaries and exportable local JSON reports.
+- Self-contained universal Mac extraction engine.
 
 Not yet public-release ready:
 
-- Final logo and complete platform icon sets.
 - Store-safe macOS build configuration.
-- Signed and notarized Mac direct build.
+- Accepted and stapled notarization for the current Mac release candidate.
 - Production Windows direct-download signing.
-- Full progress, cancellation, resume, and low-space handling.
 - Store screenshots, listing copy, support site, and final privacy URLs.
+- Clean-machine confirmation on macOS, Windows, and Linux.
 
 ## v0.4.0: Identity and Usability Beta
 
 Goal: make the existing rescue workflow feel complete and understandable.
+
+Implementation status: complete. Cross-platform package and non-technical
+tester validation remain part of the exit criteria below.
 
 - Adopt the approved drive-and-open-chain logo.
 - Generate Apple, Microsoft, Windows, Linux, and GitHub icon assets.

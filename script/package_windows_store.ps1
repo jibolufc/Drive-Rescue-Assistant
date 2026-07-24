@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ExecutablePath,
 
-    [string]$Version = "0.3.0.0",
+    [string]$Version = "0.4.0.0",
 
     [string]$OutputDirectory = "dist-store"
 )
@@ -22,7 +22,7 @@ $assetsRoot = Join-Path $packageRoot "Assets"
 $msixPath = Join-Path $outputRoot "DriveRescueAssistant_$($Version)_x64.msix"
 $uploadPath = Join-Path $outputRoot "DriveRescueAssistant_$($Version)_x64.msixupload"
 if ($Version -notmatch '^\d+\.\d+\.\d+\.\d+$') {
-    throw "MSIX version must contain four numeric parts, for example 0.3.1.0."
+    throw "MSIX version must contain four numeric parts, for example 0.4.1.0."
 }
 
 Remove-Item $outputRoot -Recurse -Force -ErrorAction SilentlyContinue
@@ -34,6 +34,10 @@ $manifest.Package.Identity.SetAttribute("Version", $Version)
 $manifest.Save((Join-Path $packageRoot "AppxManifest.xml"))
 
 Add-Type -AssemblyName System.Drawing
+$brandAsset = Join-Path $root "assets/brand/DriveRescueAssistant-icon-1024.png"
+if (-not (Test-Path $brandAsset)) {
+    throw "Brand asset was not found: $brandAsset"
+}
 
 function New-DriveRescueAsset {
     param(
@@ -44,33 +48,20 @@ function New-DriveRescueAsset {
 
     $bitmap = New-Object System.Drawing.Bitmap($Width, $Height)
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $sourceImage = [System.Drawing.Image]::FromFile($brandAsset)
     $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-    $graphics.Clear([System.Drawing.Color]::FromArgb(255, 30, 32, 34))
+    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $graphics.Clear([System.Drawing.Color]::White)
 
-    $size = [Math]::Min($Width, $Height)
-    $margin = [Math]::Max(4, [int]($size * 0.18))
-    $stroke = [Math]::Max(2, [int]($size * 0.07))
-    $driveWidth = $size - (2 * $margin)
-    $driveHeight = [int]($driveWidth * 0.62)
-    $left = [int](($Width - $driveWidth) / 2)
-    $top = [int](($Height - $driveHeight) / 2)
-
-    $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(255, 73, 196, 122), $stroke)
-    $graphics.DrawRectangle($pen, $left, $top, $driveWidth, $driveHeight)
-
-    $indicatorSize = [Math]::Max(3, [int]($size * 0.10))
-    $indicator = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 73, 196, 122))
-    $graphics.FillEllipse(
-        $indicator,
-        $left + $driveWidth - $indicatorSize - $stroke,
-        $top + $driveHeight - $indicatorSize - $stroke,
-        $indicatorSize,
-        $indicatorSize
-    )
+    $scale = [Math]::Min($Width / $sourceImage.Width, $Height / $sourceImage.Height)
+    $drawWidth = [int]($sourceImage.Width * $scale)
+    $drawHeight = [int]($sourceImage.Height * $scale)
+    $left = [int](($Width - $drawWidth) / 2)
+    $top = [int](($Height - $drawHeight) / 2)
+    $graphics.DrawImage($sourceImage, $left, $top, $drawWidth, $drawHeight)
 
     $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
-    $indicator.Dispose()
-    $pen.Dispose()
+    $sourceImage.Dispose()
     $graphics.Dispose()
     $bitmap.Dispose()
 }

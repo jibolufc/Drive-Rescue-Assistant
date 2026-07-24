@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "drive-rescue-assistant"
-version = "0.1.0"
+version = "0.4.0"
 description = "Cross-platform external drive scan and safe extraction assistant."
 readme = "README.md"
 requires-python = ">=3.10"

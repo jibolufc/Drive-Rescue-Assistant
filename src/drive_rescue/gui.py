@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import queue
+import sys
 import threading
 import tkinter as tk
+import time
+import webbrowser
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from .core.extractor import extract_files, preview_paths
-from .core.models import DriveInfo, ExtractionOptions
+from .core.extractor import ExtractionCancelled, extract_files, preview_paths
+from .core.models import DriveInfo, ExtractionOptions, ExtractionProgress, ExtractionReport
+from .core.reporter import write_report
 from .platforms.current import platform_adapter
 
 
@@ -31,10 +35,14 @@ class DriveRescueDesktop(tk.Tk):
         self.title("Drive Rescue Assistant")
         self.geometry("1040x700")
         self.minsize(860, 600)
+        self._set_window_icon()
 
         self.drives: list[DriveInfo] = []
         self.preview_items: list[tuple[Path, int]] = []
         self.worker_messages: queue.Queue[tuple[str, object]] = queue.Queue()
+        self.cancel_event = threading.Event()
+        self.extraction_started_at: float | None = None
+        self.last_report_path: Path | None = None
 
         self.source_var = tk.StringVar()
         self.destination_var = tk.StringVar()
@@ -42,11 +50,28 @@ class DriveRescueDesktop(tk.Tk):
         self.compress_var = tk.BooleanVar(value=False)
         self.status_var = tk.StringVar(value="Connect a drive or choose a source folder.")
         self.summary_var = tk.StringVar(value="No preview yet")
+        self.timing_var = tk.StringVar(value="")
 
         self._configure_style()
         self._build_ui()
         self.after(100, self._poll_worker)
         self.refresh_drives()
+
+    def _set_window_icon(self) -> None:
+        bundle_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
+        candidates = (
+            bundle_root / "assets" / "brand" / "DriveRescueAssistant-windows-256.png",
+            bundle_root / "assets" / "brand" / "DriveRescueAssistant-linux-512.png",
+            Path(__file__).resolve().parents[2] / "assets" / "brand" / "DriveRescueAssistant-linux-512.png",
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                try:
+                    self._window_icon = tk.PhotoImage(file=str(candidate))
+                    self.iconphoto(True, self._window_icon)
+                except tk.TclError:
+                    pass
+                return
 
     def _configure_style(self) -> None:
         style = ttk.Style(self)
@@ -113,6 +138,8 @@ class DriveRescueDesktop(tk.Tk):
         self.preview_button.grid(row=0, column=0)
         self.extract_button = ttk.Button(actions, text="Extract Selected", command=self.extract, state="disabled", style="Primary.TButton")
         self.extract_button.grid(row=0, column=1, padx=(8, 0))
+        self.cancel_button = ttk.Button(actions, text="Cancel", command=self.cancel_extraction, state="disabled")
+        self.cancel_button.grid(row=0, column=2, padx=(8, 0))
 
         preview_header = ttk.Frame(content)
         preview_header.grid(row=6, column=0, sticky="ew")
@@ -137,6 +164,9 @@ class DriveRescueDesktop(tk.Tk):
         ttk.Label(status, textvariable=self.status_var, wraplength=680).grid(row=0, column=0, sticky="w")
         self.progress = ttk.Progressbar(status, mode="indeterminate", length=150)
         self.progress.grid(row=0, column=1, padx=(12, 0))
+        ttk.Label(status, textvariable=self.timing_var, style="Muted.TLabel").grid(row=1, column=0, sticky="w", pady=(4, 0))
+        self.open_report_button = ttk.Button(status, text="Open Report", command=self.open_report, state="disabled")
+        self.open_report_button.grid(row=1, column=1, padx=(12, 0), pady=(4, 0))
 
     def refresh_drives(self) -> None:
         self.status_var.set("Scanning connected drives...")
@@ -194,6 +224,10 @@ class DriveRescueDesktop(tk.Tk):
             messagebox.showinfo("Nothing selected", "Select at least one file from the preview.")
             return
         selected = frozenset(self.preview_items[int(item_id)][0] for item_id in selected_ids)
+        self.cancel_event.clear()
+        self.extraction_started_at = time.monotonic()
+        self.last_report_path = None
+        self.open_report_button.configure(state="disabled")
         options = ExtractionOptions(
             source=source,
             destination=destination,
@@ -201,10 +235,36 @@ class DriveRescueDesktop(tk.Tk):
             scope=self.scope_var.get(),
             compress=self.compress_var.get(),
             selected_paths=selected,
+            progress_callback=lambda progress: self.worker_messages.put(("progress", progress)),
+            cancel_check=self.cancel_event.is_set,
         )
         self.status_var.set("Copying selected files. Keep both drives connected...")
-        self._set_busy(True)
-        self._run_worker("extract", lambda: extract_files(options))
+        self.timing_var.set("Preparing extraction...")
+        self._set_busy(True, cancellable=True)
+        self._run_worker("extract", lambda: self._perform_extraction(options))
+
+    def cancel_extraction(self) -> None:
+        if self.extraction_started_at is None:
+            return
+        self.cancel_event.set()
+        self.cancel_button.configure(state="disabled")
+        self.status_var.set("Cancelling safely. A partial ZIP will not be kept...")
+
+    @staticmethod
+    def _perform_extraction(options: ExtractionOptions) -> tuple[str, ExtractionReport]:
+        report_dir = options.destination / "Drive Rescue Reports"
+        try:
+            report = extract_files(options)
+            write_report(report, report_dir)
+            return ("complete", report)
+        except ExtractionCancelled as exc:
+            write_report(exc.report, report_dir)
+            return ("cancelled", exc.report)
+
+    def open_report(self) -> None:
+        if self.last_report_path is None:
+            return
+        webbrowser.open(self.last_report_path.resolve().as_uri())
 
     def select_all(self) -> None:
         items = self.preview_tree.get_children()
@@ -268,9 +328,18 @@ class DriveRescueDesktop(tk.Tk):
 
     def _poll_worker(self) -> None:
         try:
-            kind, payload = self.worker_messages.get_nowait()
+            while True:
+                kind, payload = self.worker_messages.get_nowait()
+                self._handle_worker_message(kind, payload)
         except queue.Empty:
-            self.after(100, self._poll_worker)
+            pass
+
+        self._update_elapsed_time()
+        self.after(100, self._poll_worker)
+
+    def _handle_worker_message(self, kind: str, payload: object) -> None:
+        if kind == "progress":
+            self._show_progress(payload)  # type: ignore[arg-type]
             return
 
         self._set_busy(False)
@@ -284,25 +353,84 @@ class DriveRescueDesktop(tk.Tk):
         elif kind == "preview":
             self._show_preview(payload)  # type: ignore[arg-type]
         elif kind == "extract":
-            report = payload
-            self.status_var.set(
-                f"Finished: {report.files_copied} files copied, {report.files_failed} failed, "
-                f"{format_bytes(report.bytes_copied)} written."
-            )
-            messagebox.showinfo("Extraction complete", self.status_var.get())
+            outcome, report = payload  # type: ignore[misc]
+            self.extraction_started_at = None
+            self.last_report_path = report.report_path
+            if self.last_report_path is not None:
+                self.open_report_button.configure(state="normal")
+            if outcome == "cancelled":
+                self.status_var.set(
+                    f"Cancelled safely. {report.files_copied} completed file"
+                    f"{'s were' if report.files_copied != 1 else ' was'} kept."
+                )
+                messagebox.showinfo("Extraction cancelled", self.status_var.get())
+            elif report.files_failed:
+                self.status_var.set(
+                    f"Finished with unreadable files: {report.files_copied} copied, "
+                    f"{report.files_failed} could not be read, {format_bytes(report.bytes_copied)} written."
+                )
+                messagebox.showwarning("Extraction finished with issues", self.status_var.get())
+            else:
+                self.status_var.set(
+                    f"Finished: {report.files_copied} files copied, "
+                    f"{format_bytes(report.bytes_copied)} written."
+                )
+                messagebox.showinfo("Extraction complete", self.status_var.get())
         else:
+            self.extraction_started_at = None
             self.status_var.set(f"Could not complete the operation: {payload}")
             messagebox.showerror("Drive Rescue Assistant", str(payload))
-        self.after(100, self._poll_worker)
 
-    def _set_busy(self, busy: bool) -> None:
+    def _show_progress(self, progress: ExtractionProgress) -> None:
+        if progress.phase == "planned":
+            self.status_var.set(
+                f"Ready to copy {progress.files_total} file"
+                f"{'s' if progress.files_total != 1 else ''} ({format_bytes(progress.bytes_total)})."
+            )
+        elif progress.current_path is not None:
+            self.status_var.set(f"Copying: {progress.current_path}")
+
+        fraction = 0.0
+        if progress.bytes_total > 0:
+            fraction = progress.bytes_completed / progress.bytes_total
+        elif progress.files_total > 0:
+            fraction = progress.files_completed / progress.files_total
+        self.progress.stop()
+        self.progress.configure(mode="determinate", maximum=100, value=max(0, min(fraction * 100, 100)))
+        self.progress_fraction = fraction
+
+    def _update_elapsed_time(self) -> None:
+        if self.extraction_started_at is None:
+            return
+        elapsed = max(time.monotonic() - self.extraction_started_at, 0)
+        text = f"Elapsed {self._format_duration(elapsed)}"
+        fraction = getattr(self, "progress_fraction", 0.0)
+        if elapsed >= 2 and 0 < fraction < 1:
+            remaining = elapsed * (1 - fraction) / fraction
+            text += f" • About {self._format_duration(remaining)} remaining"
+        self.timing_var.set(text)
+
+    @staticmethod
+    def _format_duration(seconds: float) -> str:
+        total = max(int(seconds), 0)
+        if total >= 3600:
+            return f"{total // 3600}h {(total % 3600) // 60}m"
+        if total >= 60:
+            return f"{total // 60}m {total % 60}s"
+        return f"{total}s"
+
+    def _set_busy(self, busy: bool, cancellable: bool = False) -> None:
         if busy:
+            self.progress.configure(mode="indeterminate", value=0)
             self.progress.start(12)
             self.preview_button.configure(state="disabled")
             self.extract_button.configure(state="disabled")
+            self.cancel_button.configure(state="normal" if cancellable else "disabled")
         else:
             self.progress.stop()
+            self.progress.configure(mode="determinate", value=0)
             self.preview_button.configure(state="normal")
+            self.cancel_button.configure(state="disabled")
             if self.preview_tree.selection():
                 self.extract_button.configure(state="normal")
 

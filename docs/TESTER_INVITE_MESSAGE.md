@@ -15,7 +15,7 @@ https://raw.githubusercontent.com/jibolufc/Drive-Rescue-Assistant/master/downloa
 1. Download and unzip the file.
 2. Open `DriveRescueAssistant.app`.
 3. If macOS blocks it, Control-click the app, choose `Open`, and confirm.
-4. This early Mac build may require Python 3. If the app reports that Python is missing, please include that in your feedback.
+4. The v0.4 Mac build is self-contained and does not require Python.
 
 If you previously downloaded a copy that macOS described as damaged, delete that old copy and download the replacement from the same link again.
 

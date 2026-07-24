@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,20 @@ class ExtractionOptions:
     scope: str = "all"
     compress: bool = False
     selected_paths: frozenset[Path] | None = None
+    progress_callback: Callable[["ExtractionProgress"], None] | None = None
+    cancel_check: Callable[[], bool] | None = None
+    enforce_capacity: bool = True
+
+
+@dataclass(frozen=True)
+class ExtractionProgress:
+    phase: str
+    current_path: Path | None
+    files_completed: int
+    files_total: int
+    bytes_completed: int
+    bytes_total: int
+    current_size: int = 0
 
 
 @dataclass
@@ -40,6 +55,8 @@ class ExtractionReport:
     scope: str = "all"
     compressed: bool = False
     archive_path: Path | None = None
+    report_path: Path | None = None
+    status: str = "running"
     files_seen: int = 0
     files_matched: int = 0
     files_filtered: int = 0

@@ -31,6 +31,13 @@ dist/macos/DriveRescueAssistant-macOS.zip
 ```
 
 The release script builds a universal app for Apple-silicon and Intel Macs.
+It also builds and embeds a universal `DriveRescueEngine` helper, signs that
+helper first, and then signs the containing app. Python is therefore a build
+tool rather than a tester requirement.
+
+The first helper build creates an ignored build environment and installs
+PyInstaller. A universal Python 3.12 framework is used by default; override
+`PYTHON_BUILD` when necessary.
 
 ## Configure Notarization
 
