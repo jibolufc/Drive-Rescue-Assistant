@@ -111,4 +111,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "${GITHUB_REF_NAME}" release-files/* --generate-notes --title "Drive Rescue Assistant ${GITHUB_REF_NAME}"
+        run: |
+          prerelease_flag=()
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            prerelease_flag+=(--prerelease)
+          fi
+          gh release create "${GITHUB_REF_NAME}" release-files/* \
+            --generate-notes \
+            --title "Drive Rescue Assistant ${GITHUB_REF_NAME}" \
+            "${prerelease_flag[@]}"
